@@ -7,6 +7,7 @@ import java.util.*;
 
 import Stock_Package.Stock;
 import Tool_Package.*;
+import jdk.jfr.DataAmount;
 
 import java.lang.management.*;
 import java.util.stream.Collectors;
@@ -79,6 +80,7 @@ public class AlgoTKHEP {
     private double[] utilityBinArray;
     private double[] efficiencyBinArrayLU;
     private Map<Integer,Map<Integer,Double>> mapEffPair ;
+    private Map<Integer,Map<Integer,Double>> mapInvest ;
     /**
      * a temporary buffer
      */
@@ -202,6 +204,7 @@ public class AlgoTKHEP {
         this.activateTransactionMerging = activateTransactionMerging;
         this.activateSubtreeUtilityPruning = activateSubtreeUtilityPruning;
         mapEffPair = new HashMap<>();
+        mapInvest = new HashMap<>();
 
         // read the input file
         Dataset dataset = new Dataset(inputPath, maximumTransactionCount);
@@ -398,6 +401,8 @@ public class AlgoTKHEP {
         }
 
         GetPairEff(dataset);
+        GetInvestLeaf(dataset);
+        GetInvestLeaf(dataset);
         // record the total time spent for sorting
         timeSort = System.currentTimeMillis() - timeStartSorting;
 
@@ -514,6 +519,54 @@ public class AlgoTKHEP {
         }
         minEfficiency = FixSizeQueueAndGetNewMinEff();
         mapEffPair = new HashMap<>();
+    }
+
+
+    public void GetLeafEff(Dataset dataset){
+        mapEffPair = new HashMap<>();
+        for (Transaction transaction:dataset.getTransactions()){
+            int items[] = transaction.getItems();
+            double utilities[] = transaction. getUtilities();
+            for (int i = 0; i < items.length; i++) {
+                double utilityPre = utilities[i];
+                int itemPre = items[i];
+                Map<Integer,Double> mapPre = mapEffPair.get(itemPre);
+                if (mapPre==null){
+                    mapEffPair.put(itemPre,new HashMap<>());
+                    mapPre= mapEffPair.get(itemPre);
+
+                }
+                casej:for (int j = i-1; j >=0; j--) {
+                    int itemJ = items[j];
+                    if(itemJ!=itemPre-1){
+                        break casej;
+                    }
+                    Double getUtility  = mapPre.get(itemJ);
+                    if (getUtility==null){
+                        mapPre.put(itemJ,0.0);
+                        getUtility = 0.0;
+                    }
+                    utilityPre+=utilities[j];
+                    mapPre.put(itemJ,getUtility+utilityPre);
+                    itemPre--;
+                }
+            }
+        }
+    }
+    public void GetInvestLeaf(Dataset dataset){
+        for (int i = 1; i < dataset.getMaxItem(); i++) {
+            Double currentInvest = stock.investMap.get(newNamesToOldNames[i])*1.0;
+            Map<Integer,Double> mapInvestPre = mapInvest.get(i);
+            if(mapInvestPre==null){
+                mapInvestPre = new HashMap<>();
+                mapInvest.put(i,mapInvestPre);
+                mapInvestPre = mapInvest.get(i);
+            }
+            for (int j = i+1; j < dataset.getMaxItem()+1; j++) {
+                currentInvest +=stock.investMap.get(newNamesToOldNames[j]);
+                mapInvestPre.put(j,currentInvest);
+            }
+        }
     }
 
     /**
@@ -1177,4 +1230,5 @@ public class AlgoTKHEP {
         }
         return minEffQueue.peek();
     }
+
 }
