@@ -174,7 +174,7 @@ public class AlgoTKHEP {
      * @return the itemsets or null if the user choose to save to file
      * @throws IOException if exception while reading/writing to file
      */
-    public Itemsets runAlgorithm(int k, String inputPath, String outputPath, Stock stock,
+    public Itemsets runAlgorithm(int type,int k, String inputPath, String outputPath, Stock stock,
                                  boolean activateTransactionMerging, int maximumTransactionCount, boolean activateSubtreeUtilityPruning)
             throws IOException {
         kItemsets = new PriorityQueue<>(
@@ -407,15 +407,20 @@ public class AlgoTKHEP {
 
         }
         System.out.println(minEfficiency);
-        GetPairEff(dataset);
-//        System.out.println(minEfficiency);
-//        GetInvestLeaf();
-//        GetLeafEff(dataset);
-//        updateMinEffByLeaf();
-        minEfficiency  = FixSizeQueueAndGetNewMinEff();
-        raisingThresholdLeaf(newNamesToOldNames);
-        minEfficiency  = FixSizeQueueAndGetNewMinEff();
-        System.out.println(minEfficiency);
+        if(type>1){
+            GetPairEff(dataset);
+            minEfficiency  = FixSizeQueueAndGetNewMinEff();
+            if(type>2){
+                GetInvestLeaf();
+                GetLeafEff(dataset);
+                updateMinEffByLeaf();
+                minEfficiency  = FixSizeQueueAndGetNewMinEff();
+                raisingThresholdLeaf(newNamesToOldNames);
+                minEfficiency  = FixSizeQueueAndGetNewMinEff();
+            }
+        }
+
+
 
 
         // record the total time spent for sorting

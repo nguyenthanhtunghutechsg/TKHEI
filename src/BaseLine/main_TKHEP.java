@@ -23,59 +23,68 @@ public class main_TKHEP {
 		int repeat = 5;
 		int dbSize = Integer.MAX_VALUE;
 
-		int currentK = kStart;
+		// ---- Loop cho type 1, 2, 3 ----
+		for (int type = 1; type <= 3; type++) {
 
-		for (int run = 1; run <= repeat; run++) {
+			System.out.println("\n============== START TYPE " + type + " ==============");
 
-			System.out.println("\n---------------- RUN " + run + " ----------------");
-			System.out.println("Current k = " + currentK);
+			int currentK = kStart;
 
-			// === FILE OUTPUT NAME ===
-			String outFileName = "results/"+dataset + "_k" + currentK + ".txt";
+			for (int run = 1; run <= repeat; run++) {
 
-			// === Prepare writer ===
-			PrintWriter writer = new PrintWriter(new FileWriter(outFileName));
+				System.out.println("\n---------------- RUN " + run + " (type=" + type + ") ----------------");
+				System.out.println("Current k = " + currentK);
 
-			writer.println("=========== EXPERIMENT RUN " + run + " ===========");
-			writer.println("Dataset: " + dataset);
-			writer.println("k = " + currentK);
-			writer.println("------------------------------------------");
+				// === Tên file output ===
+				String outFileName = "results/type" + type + "_k" + currentK + "_" + dataset + ".txt";
 
-			AlgoTKHEP algo = new AlgoTKHEP();
+				// === Tạo writer ===
+				PrintWriter writer = new PrintWriter(new FileWriter(outFileName));
 
-			long start = System.currentTimeMillis();
-			algo.runAlgorithm(currentK, input, null, stock, true, dbSize, true);
-			long end = System.currentTimeMillis();
-			long runtime = end - start;
+				writer.println("=========== EXPERIMENT RUN " + run + " ===========");
+				writer.println("Dataset: " + dataset);
+				writer.println("Type: " + type);
+				writer.println("k = " + currentK);
+				writer.println("------------------------------------------");
 
-			// ===== WRITE RUNTIME =====
-			writer.println("Runtime: " + runtime + " ms (" + (runtime / 1000.0) + " s)");
+				AlgoTKHEP algo = new AlgoTKHEP();
 
-			// ===== WRITE STATS =====
-			writer.println("\n========== TKHEP - STATS ============");
-			writer.println("minEfficiency = " + algo.minEfficiency);
-			writer.println("High Efficiency itemsets count = " + algo.globalK);
-			writer.println("Total time = " + ((algo.endTimestamp - algo.startTimestamp) / 1000.0) + " s");
-			writer.println("Transaction merge count = " + algo.mergeCount);
-			writer.println("Transaction read count = " + algo.transactionReadingCount);
-			writer.println("Max memory = " + MemoryLogger.getInstance().getMaxMemory());
-			writer.println("Candidate count = " + algo.candidateCount);
-			writer.println("=====================================");
+				long start = System.currentTimeMillis();
+				algo.runAlgorithm(type, currentK, input, null, stock, true, dbSize, true);
+				long end = System.currentTimeMillis();
+				long runtime = end - start;
 
-			// ===== WRITE RESULTS (nếu muốn) =====
-			// algo.printResult(writer);  // <-- nếu bạn có phiên bản printResult(PrintWriter)
+				// ===== WRITE RUNTIME =====
+				writer.println("Runtime: " + runtime + " ms (" + (runtime / 1000.0) + " s)");
 
-			writer.close();
+				// ===== WRITE STATS =====
+				writer.println("\n========== TKHEP - STATS ============");
+				writer.println("minEfficiency = " + algo.minEfficiency);
+				writer.println("High Efficiency itemsets count = " + algo.globalK);
+				writer.println("Total time = " + ((algo.endTimestamp - algo.startTimestamp) / 1000.0) + " s");
+				writer.println("Transaction merge count = " + algo.mergeCount);
+				writer.println("Transaction read count = " + algo.transactionReadingCount);
+				writer.println("Max memory = " + MemoryLogger.getInstance().getMaxMemory());
+				writer.println("Candidate count = " + algo.candidateCount);
+				writer.println("=====================================");
 
-			System.out.println(">> Output saved to: " + outFileName);
+				// Nếu bạn có hàm printResult(writer)
+				// algo.printResult(writer);
 
-			algo = null;
-			System.gc();
+				writer.close();
 
-			currentK -= decreaseStep;
-			if (currentK <= 0) break;
+				System.out.println(">> Output saved to: " + outFileName);
+
+				algo = null;
+				System.gc();
+
+				currentK -= decreaseStep;
+				if (currentK <= 0) break;
+			}
+
+			System.out.println("============== FINISHED TYPE " + type + " ==============\n");
 		}
 
-		System.out.println("\n============== FINISHED ALL RUNS ==============");
+		System.out.println("\n============== FINISHED ALL TYPES ==============");
 	}
 }

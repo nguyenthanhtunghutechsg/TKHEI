@@ -5,10 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b659e69c-14e4-4132-974b-753727c63b03" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/chainstore.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/BaseLine/AlgoTKHEP.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/BaseLine/AlgoTKHEP.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/BaseLine/main_TKHEP.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/BaseLine/main_TKHEP.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -92,7 +90,7 @@
       <workItem from="1763644111408" duration="2803000" />
       <workItem from="1763646938855" duration="3651000" />
       <workItem from="1763695667915" duration="7616000" />
-      <workItem from="1763713435124" duration="10070000" />
+      <workItem from="1763713435124" duration="10935000" />
     </task>
     <servers />
   </component>
