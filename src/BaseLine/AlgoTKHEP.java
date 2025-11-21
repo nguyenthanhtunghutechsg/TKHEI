@@ -80,7 +80,7 @@ public class AlgoTKHEP {
     private double[] utilityBinArray;
     private double[] efficiencyBinArrayLU;
     private Map<Integer,Map<Integer,Double>> mapEffPair ;
-    private Map<Integer,Map<Integer,Double>> mapInvest ;
+    private int[][] arrayInvest;
     /**
      * a temporary buffer
      */
@@ -142,7 +142,7 @@ public class AlgoTKHEP {
     /**
      * number of itemsets from the search tree that were considered
      */
-    private long candidateCount;
+    public long candidateCount;
 
     /**
      * If true, sub-tree utility pruning will be performed
@@ -204,7 +204,7 @@ public class AlgoTKHEP {
         this.activateTransactionMerging = activateTransactionMerging;
         this.activateSubtreeUtilityPruning = activateSubtreeUtilityPruning;
         mapEffPair = new HashMap<>();
-        mapInvest = new HashMap<>();
+
 
         // read the input file
         Dataset dataset = new Dataset(inputPath, maximumTransactionCount);
@@ -253,20 +253,26 @@ public class AlgoTKHEP {
 
         // Now, we keep only the promising items (those having a twu >= minutil)
         List<Integer> itemsToKeep = new ArrayList<Integer>();
-        for (int j = 0; j < utilityBinArrayLU.length; j++) {
-            if (utilityBinArrayLU[j] <= 0||stock.investMap.get(j)==null) {
+        for (int j = 0; j < utilityBinArray.length; j++) {
+            if (utilityBinArray[j] <= 0||stock.investMap.get(j)==null) {
                 continue;
             }
-            double estimateEfficiency = (double) utilityBinArrayLU[j] / stock.investMap.get(j);
             minEffQueue.add(utilityBinArray[j]/ stock.investMap.get(j));
-            if (Tool.compare(estimateEfficiency, minEfficiency) >= 0) {
-                itemsToKeep.add(j);
-            }
         }
         for(Transaction transaction:dataset.getTransactions()){
             minEffQueue.add(transaction.transactionUtility/transaction.SumInvest);
         }
         minEfficiency = FixSizeQueueAndGetNewMinEff();
+
+        for (int j = 0; j < utilityBinArrayLU.length; j++) {
+            if (utilityBinArrayLU[j] <= 0 || stock.investMap.get(j) == null) {
+                continue;
+            }
+            double estimateEfficiency = (double) utilityBinArrayLU[j] / stock.investMap.get(j);
+            if (Tool.compare(estimateEfficiency, minEfficiency) >= 0) {
+                itemsToKeep.add(j);
+            }
+        }
 
 
         // Sort promising items according to the increasing order of TWU
@@ -297,6 +303,7 @@ public class AlgoTKHEP {
 
                 // remember the number of promising item
         newItemCount = itemsToKeep.size();
+        arrayInvest = new int[newItemCount+1][newItemCount+1];
         // initialize the utility-bin array for counting the subtree utility
         efficiencyBinArraySU = new double[newItemCount + 1];
 
@@ -399,10 +406,18 @@ public class AlgoTKHEP {
             dataset.transactions = dataset.transactions.subList(emptyTransactionCount, dataset.transactions.size());
 
         }
-
+        System.out.println(minEfficiency);
         GetPairEff(dataset);
-        GetInvestLeaf(dataset);
-        GetInvestLeaf(dataset);
+//        System.out.println(minEfficiency);
+//        GetInvestLeaf();
+//        GetLeafEff(dataset);
+//        updateMinEffByLeaf();
+        minEfficiency  = FixSizeQueueAndGetNewMinEff();
+        raisingThresholdLeaf(newNamesToOldNames);
+        minEfficiency  = FixSizeQueueAndGetNewMinEff();
+        System.out.println(minEfficiency);
+
+
         // record the total time spent for sorting
         timeSort = System.currentTimeMillis() - timeStartSorting;
 
@@ -443,27 +458,27 @@ public class AlgoTKHEP {
             System.out.println("===== List of promising items === ");
             System.out.println(itemsToKeep);
         }
-        String result = "";
-        for (Integer integer : newNamesToOldNames) {
-            result += " " + integer;
-        }
-        System.out.println("new: " + result);
-        result = "";
-        for (Integer integer : oldNameToNewNames) {
-            result += " " + integer;
-        }
-        System.out.println("old: " + result);
-        System.out.println("null");
-        result = "";
-        for (Integer integer : itemsToExplore) {
-            result += " " + integer;
-        }
-        System.out.println(result);
-        result = "";
-        for (Integer integer : itemsToKeep) {
-            result += " " + integer;
-        }
-        System.out.println(result);
+//        String result = "";
+//        for (Integer integer : newNamesToOldNames) {
+//            result += " " + integer;
+//        }
+//        System.out.println("new: " + result);
+//        result = "";
+//        for (Integer integer : oldNameToNewNames) {
+//            result += " " + integer;
+//        }
+//        System.out.println("old: " + result);
+//        System.out.println("null");
+//        result = "";
+//        for (Integer integer : itemsToExplore) {
+//            result += " " + integer;
+//        }
+//        System.out.println(result);
+//        result = "";
+//        for (Integer integer : itemsToKeep) {
+//            result += " " + integer;
+//        }
+//        System.out.println(result);
 
 //    	//======
         // Recursive call to the algorithm
@@ -553,18 +568,12 @@ public class AlgoTKHEP {
             }
         }
     }
-    public void GetInvestLeaf(Dataset dataset){
-        for (int i = 1; i < dataset.getMaxItem(); i++) {
-            Double currentInvest = stock.investMap.get(newNamesToOldNames[i])*1.0;
-            Map<Integer,Double> mapInvestPre = mapInvest.get(i);
-            if(mapInvestPre==null){
-                mapInvestPre = new HashMap<>();
-                mapInvest.put(i,mapInvestPre);
-                mapInvestPre = mapInvest.get(i);
-            }
-            for (int j = i+1; j < dataset.getMaxItem()+1; j++) {
-                currentInvest +=stock.investMap.get(newNamesToOldNames[j]);
-                mapInvestPre.put(j,currentInvest);
+    public void GetInvestLeaf(){
+        for (int i = 1; i < newItemCount; i++) {
+            int currentInvest = stock.investMap.get(newNamesToOldNames[i]);
+            for (int j = i+1; j < newItemCount+1; j++) {
+                currentInvest += stock.investMap.get(newNamesToOldNames[j]);
+                arrayInvest[i][j]=currentInvest;
             }
         }
     }
@@ -1181,22 +1190,12 @@ public class AlgoTKHEP {
      */
     public void printStats() {
 
-        System.out.println("========== HEPM_Imporved_4 - STATS ============");
+        System.out.println("========== TKHEI - STATS ============");
         System.out.println(" minEfficiency = " + minEfficiency);
-        System.out.println(" High Efficiency itemsets count: " + patternCount);
+        System.out.println(" High Efficiency itemsets count: " + globalK);
         System.out.println(" Total time ~: " + (endTimestamp * 1.0d - startTimestamp) / 1000 + " s");
         System.out.println(" Transaction merge count ~: " + mergeCount);
         System.out.println(" Transaction read count ~: " + transactionReadingCount);
-
-        // if in debug mode, we show more information
-        if (DEBUG) {
-
-            System.out.println(" Time intersections ~: " + timeIntersections + " ms");
-            System.out.println(" Time database reduction ~: " + timeDatabaseReduction + " ms");
-            System.out.println(" Time promising items ~: " + timeIdentifyPromisingItems + " ms");
-            System.out.println(" Time binary search ~: " + timeBinarySearch + " ms");
-            System.out.println(" Time sort ~: " + timeSort + " ms");
-        }
         System.out.println(" Max memory:" + MemoryLogger.getInstance().getMaxMemory());
         System.out.println(" Candidate count : " + candidateCount);
         System.out.println("=====================================");
@@ -1229,6 +1228,51 @@ public class AlgoTKHEP {
              minEffQueue.poll();
         }
         return minEffQueue.peek();
+    }
+    public void updateMinEffByLeaf(){
+        for(Map.Entry<Integer,Map<Integer,Double>> entryPre:mapEffPair.entrySet()){
+            Integer itemI = entryPre.getKey();
+            for (Map.Entry<Integer,Double> entryAfter : entryPre.getValue().entrySet()){
+                Integer itemJ = entryAfter.getKey();
+                double investSequence = arrayInvest[itemI][itemJ];
+                minEffQueue.add(entryAfter.getValue()/investSequence);
+            }
+        }
+    }
+    public void raisingThresholdLeaf(int newNamesToOldNames[]){
+        for(Map.Entry<Integer,Map<Integer,Double>> entryMap: mapEffPair.entrySet()){
+            for(Map.Entry<Integer,Double> entryInteger : entryMap.getValue().entrySet()){
+                double value = entryInteger.getValue();
+                int st = entryMap.getKey();
+                int end = entryInteger.getKey();
+                double invest = arrayInvest[st][end];
+                double invest2 = 0;
+                double value2 = 0;
+                for (int k = st+1; k < end ; k++) {
+                    value2 = value-utilityBinArray[newNamesToOldNames[k]];
+                    invest2 = invest - stock.investMap.get(newNamesToOldNames[k]);
+                    if (value2/invest2>=minEfficiency){
+                        minEffQueue.add(value2/invest2);
+                    }
+                    for (int l = k+1; l < end ; l++) {
+                        value2 = value-utilityBinArray[newNamesToOldNames[k]]-utilityBinArray[newNamesToOldNames[l]];
+                        invest2 = invest - stock.investMap.get(newNamesToOldNames[k])-stock.investMap.get(newNamesToOldNames[l]);
+                        if (value2/invest2>=minEfficiency){
+                            minEffQueue.add(value2/invest2);
+                        }
+                        for (int m = l+1; m < end; m++) {
+                            value2 = value-utilityBinArray[newNamesToOldNames[k]]-utilityBinArray[newNamesToOldNames[l]]-utilityBinArray[newNamesToOldNames[m]];
+                            invest2 = invest - stock.investMap.get(newNamesToOldNames[k])-stock.investMap.get(newNamesToOldNames[l])-stock.investMap.get(newNamesToOldNames[m]);
+                            if (value2/invest2>=minEfficiency){
+                                minEffQueue.add(value2/invest2);
+                            }
+                        }
+                    }
+                }
+
+            }
+        }
+        mapEffPair = new HashMap<>();
     }
 
 }
