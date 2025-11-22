@@ -27,7 +27,7 @@ public class Transaction {
 	/** a buffer to store items of an itemset*/
 	public static int[] tempItems = new int[2000];
 	/** a buffer to store utilities of an itemset */
-	public static double[] tempUtilities = new double[2000];
+	public static float[] tempUtilities = new float[2000];
 
 	/** an offset pointer, used by projected transactions*/
 	int offset;
@@ -35,14 +35,14 @@ public class Transaction {
 	/** an array of items representing the transaction */
     int[] items;
     /** an array of utilities associated to items of the transaction */
-    double[] utilities;
+	float[] utilities;
 	int SumInvest;
     
     /** the transaction utility of the transaction or projected transaction */
-     double transactionUtility;
+     float transactionUtility;
      
      /** the profit of a given prefix in this transaction (initially 0 if a transaction is not projected)*/
-	 double prefixUtility;
+	 float prefixUtility;
 
      /**
       * Constructor of a transaction
@@ -50,7 +50,7 @@ public class Transaction {
       * @param utilities the utilities of item in this transaction
       * @param transactionUtility the transaction utility
       */
-    public Transaction(int[] items, double[] utilities, double transactionUtility) {
+    public Transaction(int[] items, float[] utilities, float transactionUtility) {
     	this.items = items;
     	this.utilities = utilities;
     	this.transactionUtility = transactionUtility;
@@ -71,7 +71,7 @@ public class Transaction {
     	this.utilities = transaction.getUtilities();
     	
     	// copy the utility of element e
-    	double utilityE = this.utilities[offsetE];
+		float utilityE = this.utilities[offsetE];
     	
     	// add the  utility of item e to the utility of the whole prefix used to project the transaction
     	this.prefixUtility = transaction.prefixUtility + utilityE;
@@ -118,7 +118,7 @@ public class Transaction {
      * Get the array of utilities in this transaction
      * @return array of utilities
      */
-    public double[] getUtilities() {
+    public float[] getUtilities() {
         return utilities;
     }
 
@@ -165,7 +165,7 @@ public class Transaction {
     	System.arraycopy(tempItems, 0, this.items, 0, i);
     	
     	// copy the buffer of utilities back into the original array
-    	this.utilities = new double[i];
+    	this.utilities = new float[i];
     	System.arraycopy(tempUtilities, 0, this.utilities, 0, i);
     	
     	// Sort by increasing TWU values
@@ -177,10 +177,10 @@ public class Transaction {
 	 * This has an average performance of O(n log n)
 	 * @param items array of integers
 	 */
-	public static void insertionSort(int [] items,  double[] utitilies){
+	public static void insertionSort(int [] items,  float[] utitilies){
 		for(int j=1; j< items.length; j++){
 			int itemJ = items[j];
-			double utilityJ = utitilies[j];
+			float utilityJ = utitilies[j];
 			int i = j - 1;
 			for(; i>=0 && (items[i]  > itemJ); i--){
 				items[i+1] = items[i];

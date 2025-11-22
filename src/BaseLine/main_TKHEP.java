@@ -11,14 +11,14 @@ public class main_TKHEP {
 
 	public static void main(String[] args) throws IOException {
 
-		String dataset = "accidents";
+		String dataset = "chainstore";
 		String input = dataset + ".txt";
 		String input2 = dataset + "Invest.txt";
 
 		Stock stock = new Stock();
 		stock.loadFile(input2);
 
-		int kStart = 20000;
+		int kStart = 100000;
 		int decreaseStep = 2000;
 		int repeat = 5;
 		int dbSize = Integer.MAX_VALUE;

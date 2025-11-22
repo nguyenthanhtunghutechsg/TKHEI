@@ -76,11 +76,10 @@ public class AlgoTKHEP {
     /**
      * utility bin array for sub-tree utility
      */
-    private double[] efficiencyBinArraySU;
-    private double[] utilityBinArray;
-    private double[] efficiencyBinArrayLU;
-    private double[][] arrayEffPair ;
-    private int[][] arrayInvest;
+    private float[] efficiencyBinArraySU;
+    private float[] utilityBinArray;
+    private float[] efficiencyBinArrayLU;
+    private float[][] arrayEffPair ;
     /**
      * a temporary buffer
      */
@@ -152,7 +151,7 @@ public class AlgoTKHEP {
     public Stock stock;
     public PriorityQueue<Itemset> kItemsets;
     public int globalK;
-    public PriorityQueue<Double> minEffQueue;
+    public PriorityQueue<Float> minEffQueue;
     /**
      * Constructor
      */
@@ -303,10 +302,9 @@ public class AlgoTKHEP {
 
                 // remember the number of promising item
         newItemCount = itemsToKeep.size();
-        arrayInvest = new int[newItemCount+1][newItemCount+1];
-        arrayEffPair = new double[newItemCount+1][newItemCount+1];
+        arrayEffPair = new float[newItemCount+1][newItemCount+1];
         // initialize the utility-bin array for counting the subtree utility
-        efficiencyBinArraySU = new double[newItemCount + 1];
+        efficiencyBinArraySU = new float[newItemCount + 1];
 
         // if in debug mode, print to the old names and new names to the console
         // to check if they are correct
@@ -412,7 +410,7 @@ public class AlgoTKHEP {
             GetPairEff(dataset);
             minEfficiency  = FixSizeQueueAndGetNewMinEff();
             if(type>2){
-                GetInvestLeaf();
+                //GetInvestLeaf();
                 GetLeafEff(dataset);
                 updateMinEffByLeaf();
                 minEfficiency  = FixSizeQueueAndGetNewMinEff();
@@ -510,58 +508,6 @@ public class AlgoTKHEP {
         // return the set of high-utility itemsets
         // return highUtilityItemsets;
         return null;
-    }
-    public void GetPairEff(Dataset dataset){
-        for (Transaction transaction : dataset.getTransactions()) {
-            for (int i = 0; i < transaction.items.length; i++) {
-                int itemi = transaction.items[i];
-                int investItemI = stock.investMap.get(newNamesToOldNames[itemi]);
-                for (int j = i+1; j < transaction.items.length; j++) {
-                    int itemj = transaction.items[j];
-                    int investItemJ = stock.investMap.get(newNamesToOldNames[itemj]);
-                    arrayEffPair[itemi][itemj]+=(transaction.utilities[i]+transaction.utilities[j])*1.0/(investItemI+investItemJ);
-
-                }
-            }
-        }
-        for (int i = 0; i < newItemCount+1; i++) {
-            for (int j = i+1; j < newItemCount+1; j++) {
-                minEffQueue.add(arrayEffPair[i][j]);
-            }
-        }
-        minEfficiency = FixSizeQueueAndGetNewMinEff();
-        arrayEffPair = new double[newItemCount+1][newItemCount+1];
-    }
-
-
-    public void GetLeafEff(Dataset dataset){
-        arrayEffPair = new double[newItemCount+1][newItemCount+1];
-        for (Transaction transaction:dataset.getTransactions()){
-            int items[] = transaction.getItems();
-            double utilities[] = transaction. getUtilities();
-            for (int i = 0; i < items.length; i++) {
-                double utilityPre = utilities[i];
-                int itemPre = items[i];
-                casej:for (int j = i-1; j >=0; j--) {
-                    int itemJ = items[j];
-                    if(itemJ!=itemPre-1){
-                        break casej;
-                    }
-                    utilityPre+=utilities[j];
-                    arrayEffPair[itemPre][itemJ] +=utilityPre;
-                    itemPre--;
-                }
-            }
-        }
-    }
-    public void GetInvestLeaf(){
-        for (int i = 1; i < newItemCount; i++) {
-            int currentInvest = stock.investMap.get(newNamesToOldNames[i]);
-            for (int j = i+1; j < newItemCount+1; j++) {
-                currentInvest += stock.investMap.get(newNamesToOldNames[j]);
-                arrayInvest[i][j]=currentInvest;
-            }
-        }
     }
 
     /**
@@ -721,7 +667,7 @@ public class AlgoTKHEP {
                                     int[] items = new int[itemsCount];
                                     System.arraycopy(previousTransaction.items, previousTransaction.offset, items, 0,
                                             itemsCount);
-                                    double[] utilities = new double[itemsCount];
+                                    float[] utilities = new float[itemsCount];
                                     System.arraycopy(previousTransaction.utilities, previousTransaction.offset,
                                             utilities, 0, itemsCount);
 
@@ -735,7 +681,7 @@ public class AlgoTKHEP {
                                     }
 
                                     // make the sum of prefix utilities
-                                    double sumUtilities = previousTransaction.prefixUtility += projectedTransaction.prefixUtility;
+                                    float sumUtilities = previousTransaction.prefixUtility += projectedTransaction.prefixUtility;
 
                                     // create the new transaction replacing the two merged transactions
                                     previousTransaction = new Transaction(items, utilities,
@@ -922,8 +868,8 @@ public class AlgoTKHEP {
 
         // Initialize utility bins for all items
         int[] utilityBinArrayLU = new int[dataset.getMaxItem() + 1];
-        efficiencyBinArrayLU = new double[dataset.getMaxItem() + 1];
-        utilityBinArray = new double[dataset.getMaxItem()+1];
+        efficiencyBinArrayLU = new float[dataset.getMaxItem() + 1];
+        utilityBinArray = new float[dataset.getMaxItem()+1];
 
         // Scan the database to fill the utility bins
         // For each transaction
@@ -1013,8 +959,8 @@ public class AlgoTKHEP {
             Integer item = itemsToKeep.get(i);
             // We reset the utility bins of that item for computing the sub-tree utility and
             // local utility
-            efficiencyBinArrayLU[item] = 0.0;
-            efficiencyBinArraySU[item] = 0.0;
+            efficiencyBinArrayLU[item] = 0.0f;
+            efficiencyBinArraySU[item] = 0.0f;
         }
         Map<Integer, Integer> mapItemToInvest = stock.investMap;
         int sumRemainingUtility;
@@ -1216,22 +1162,22 @@ public class AlgoTKHEP {
         return minEffQueue.peek();
     }
     public void updateMinEffByLeaf(){
-        for (int i = 0; i < newItemCount; i++) {
-            for (int j = 0; j < newItemCount; j++) {
-                double investSequence = arrayInvest[i][j];
-                minEffQueue.add(arrayEffPair[i][j]*1.0/investSequence);
+        for (int i = 1; i < newItemCount; i++) {
+            for (int j = i+1; j < newItemCount+1; j++) {
+                float investSequence = arrayEffPair[j][i];
+                minEffQueue.add(arrayEffPair[i][j]*1.0f/investSequence);
             }
         }
     }
     public void raisingThresholdLeaf(int newNamesToOldNames[]){
         for (int i = 1; i < newItemCount; i++) {
-            for (int j = i+1; j < newItemCount; j++) {
+            for (int j = i+1; j < newItemCount+1; j++) {
                 int st = i;
                 int end = j;
-                double value = arrayEffPair[st][end];
-                double invest = arrayInvest[st][end];
-                double invest2 = 0;
-                double value2 = 0;
+                float value = arrayEffPair[st][end];
+                float invest = arrayEffPair[end][st];
+                float invest2 = 0;
+                float value2 = 0;
                 for (int k = st+1; k < end ; k++) {
                     value2 = value-utilityBinArray[newNamesToOldNames[k]];
                     invest2 = invest - stock.investMap.get(newNamesToOldNames[k]);
@@ -1255,7 +1201,56 @@ public class AlgoTKHEP {
                 }
             }
         }
-        arrayEffPair = new double[0][0];
+        arrayEffPair = new float[0][0];
+    }
+    public void GetPairEff(Dataset dataset){
+        for (Transaction transaction : dataset.getTransactions()) {
+            for (int i = 0; i < transaction.items.length; i++) {
+                int itemi = transaction.items[i];
+                int investItemI = stock.investMap.get(newNamesToOldNames[itemi]);
+                for (int j = i+1; j < transaction.items.length; j++) {
+                    int itemj = transaction.items[j];
+                    int investItemJ = stock.investMap.get(newNamesToOldNames[itemj]);
+                    arrayEffPair[itemi][itemj]+=(transaction.utilities[i]+transaction.utilities[j])*1.0/(investItemI+investItemJ);
+
+                }
+            }
+        }
+        for (int i = 0; i < newItemCount; i++) {
+            for (int j = i+1; j < newItemCount+1; j++) {
+                minEffQueue.add(arrayEffPair[i][j]);
+            }
+        }
+        minEfficiency = FixSizeQueueAndGetNewMinEff();
+        arrayEffPair = new float[newItemCount+1][newItemCount+1];
     }
 
+
+    public void GetLeafEff(Dataset dataset){
+        arrayEffPair = new float[newItemCount+1][newItemCount+1];
+        for (int i = 1; i < newItemCount; i++) {
+            int currentInvest = stock.investMap.get(newNamesToOldNames[i]);
+            for (int j = i+1; j < newItemCount+1; j++) {
+                currentInvest += stock.investMap.get(newNamesToOldNames[j]);
+                arrayEffPair[j][i]=currentInvest;
+            }
+        }
+        for (Transaction transaction:dataset.getTransactions()){
+            int items[] = transaction.getItems();
+            float utilities[] = transaction. getUtilities();
+            for (int i = 0; i < items.length; i++) {
+                double utilityPre = utilities[i];
+                int itemPre = items[i];
+                casej:for (int j = i-1; j >=0; j--) {
+                    int itemJ = items[j];
+                    if(itemJ!=itemPre-1){
+                        break casej;
+                    }
+                    utilityPre+=utilities[j];
+                    arrayEffPair[itemPre][itemJ] +=utilityPre;
+                    itemPre--;
+                }
+            }
+        }
+    }
 }

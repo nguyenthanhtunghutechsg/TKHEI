@@ -94,7 +94,7 @@ public class Dataset {
     	
         //Create array to store the items and their utilities
         int[] items = new  int[itemsString.length];
-        double[] utilities = new  double[itemsString.length];
+        float[] utilities = new  float[itemsString.length];
 
         // for each item
         for (int i = 0; i < items.length; i++) {
