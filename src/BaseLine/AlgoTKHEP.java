@@ -79,7 +79,7 @@ public class AlgoTKHEP {
     private double[] efficiencyBinArraySU;
     private double[] utilityBinArray;
     private double[] efficiencyBinArrayLU;
-    private Map<Integer,Map<Integer,Double>> mapEffPair ;
+    private double[][] arrayEffPair ;
     private int[][] arrayInvest;
     /**
      * a temporary buffer
@@ -203,7 +203,7 @@ public class AlgoTKHEP {
         // save parameters about activating or not the optimizations
         this.activateTransactionMerging = activateTransactionMerging;
         this.activateSubtreeUtilityPruning = activateSubtreeUtilityPruning;
-        mapEffPair = new HashMap<>();
+
 
 
         // read the input file
@@ -304,6 +304,7 @@ public class AlgoTKHEP {
                 // remember the number of promising item
         newItemCount = itemsToKeep.size();
         arrayInvest = new int[newItemCount+1][newItemCount+1];
+        arrayEffPair = new double[newItemCount+1][newItemCount+1];
         // initialize the utility-bin array for counting the subtree utility
         efficiencyBinArraySU = new double[newItemCount + 1];
 
@@ -513,61 +514,41 @@ public class AlgoTKHEP {
     public void GetPairEff(Dataset dataset){
         for (Transaction transaction : dataset.getTransactions()) {
             for (int i = 0; i < transaction.items.length; i++) {
-                Integer itemi = transaction.items[i];
-                Map<Integer,Double> EffPair = mapEffPair.get(itemi);
-                if(EffPair == null){
-                    EffPair = new HashMap<>();
-                }
-                Integer investItemI = stock.investMap.get(newNamesToOldNames[itemi]);
+                int itemi = transaction.items[i];
+                int investItemI = stock.investMap.get(newNamesToOldNames[itemi]);
                 for (int j = i+1; j < transaction.items.length; j++) {
-                    Integer itemj = transaction.items[j];
-                    Integer investItemJ = stock.investMap.get(newNamesToOldNames[itemj]);
-                    Double EffItemIJ = EffPair.get(itemj);
-                    if(EffItemIJ == null){
-                        EffPair.put(itemj, transaction.utilities[j]/(investItemI+investItemJ));
-                    }else{
-                        EffPair.put(itemj, EffItemIJ+transaction.utilities[j]/(investItemI+investItemJ));
-                    }
+                    int itemj = transaction.items[j];
+                    int investItemJ = stock.investMap.get(newNamesToOldNames[itemj]);
+                    arrayEffPair[itemi][itemj]+=(transaction.utilities[i]+transaction.utilities[j])*1.0/(investItemI+investItemJ);
+
                 }
-                mapEffPair.put(itemi, EffPair);
             }
         }
-        for(Map.Entry<Integer,Map<Integer,Double>> entry : mapEffPair.entrySet()){
-            for (Map.Entry<Integer,Double> entry2 : entry.getValue().entrySet()) {
-                minEffQueue.add(entry2.getValue());
+        for (int i = 0; i < newItemCount+1; i++) {
+            for (int j = i+1; j < newItemCount+1; j++) {
+                minEffQueue.add(arrayEffPair[i][j]);
             }
         }
         minEfficiency = FixSizeQueueAndGetNewMinEff();
-        mapEffPair = new HashMap<>();
+        arrayEffPair = new double[newItemCount+1][newItemCount+1];
     }
 
 
     public void GetLeafEff(Dataset dataset){
-        mapEffPair = new HashMap<>();
+        arrayEffPair = new double[newItemCount+1][newItemCount+1];
         for (Transaction transaction:dataset.getTransactions()){
             int items[] = transaction.getItems();
             double utilities[] = transaction. getUtilities();
             for (int i = 0; i < items.length; i++) {
                 double utilityPre = utilities[i];
                 int itemPre = items[i];
-                Map<Integer,Double> mapPre = mapEffPair.get(itemPre);
-                if (mapPre==null){
-                    mapEffPair.put(itemPre,new HashMap<>());
-                    mapPre= mapEffPair.get(itemPre);
-
-                }
                 casej:for (int j = i-1; j >=0; j--) {
                     int itemJ = items[j];
                     if(itemJ!=itemPre-1){
                         break casej;
                     }
-                    Double getUtility  = mapPre.get(itemJ);
-                    if (getUtility==null){
-                        mapPre.put(itemJ,0.0);
-                        getUtility = 0.0;
-                    }
                     utilityPre+=utilities[j];
-                    mapPre.put(itemJ,getUtility+utilityPre);
+                    arrayEffPair[itemPre][itemJ] +=utilityPre;
                     itemPre--;
                 }
             }
@@ -1235,21 +1216,19 @@ public class AlgoTKHEP {
         return minEffQueue.peek();
     }
     public void updateMinEffByLeaf(){
-        for(Map.Entry<Integer,Map<Integer,Double>> entryPre:mapEffPair.entrySet()){
-            Integer itemI = entryPre.getKey();
-            for (Map.Entry<Integer,Double> entryAfter : entryPre.getValue().entrySet()){
-                Integer itemJ = entryAfter.getKey();
-                double investSequence = arrayInvest[itemI][itemJ];
-                minEffQueue.add(entryAfter.getValue()/investSequence);
+        for (int i = 0; i < newItemCount; i++) {
+            for (int j = 0; j < newItemCount; j++) {
+                double investSequence = arrayInvest[i][j];
+                minEffQueue.add(arrayEffPair[i][j]*1.0/investSequence);
             }
         }
     }
     public void raisingThresholdLeaf(int newNamesToOldNames[]){
-        for(Map.Entry<Integer,Map<Integer,Double>> entryMap: mapEffPair.entrySet()){
-            for(Map.Entry<Integer,Double> entryInteger : entryMap.getValue().entrySet()){
-                double value = entryInteger.getValue();
-                int st = entryMap.getKey();
-                int end = entryInteger.getKey();
+        for (int i = 1; i < newItemCount; i++) {
+            for (int j = i+1; j < newItemCount; j++) {
+                int st = i;
+                int end = j;
+                double value = arrayEffPair[st][end];
                 double invest = arrayInvest[st][end];
                 double invest2 = 0;
                 double value2 = 0;
@@ -1274,10 +1253,9 @@ public class AlgoTKHEP {
                         }
                     }
                 }
-
             }
         }
-        mapEffPair = new HashMap<>();
+        arrayEffPair = new double[0][0];
     }
 
 }
